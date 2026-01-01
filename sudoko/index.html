@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login - Sudoku 6</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+
+    <style>
+        * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #090a0f; color: white; }
+        #bgCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        .center-box { 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 10; 
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            padding: 40px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        h2 { font-weight: 800; font-size: 1.8rem; margin-bottom: 20px; letter-spacing: 2px; color: #fff; }
+        
+        input {
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.4); color: white; outline: none;
+            font-size: 1rem; transition: 0.3s;
+        }
+        
+        input:focus { border-color: #0a66c2; box-shadow: 0 0 10px rgba(10, 102, 194, 0.3); }
+
+        .start-btn {
+            background: linear-gradient(135deg, #0a66c2, #004a91);
+            color: white; border: none; padding: 15px;
+            border-radius: 12px; cursor: pointer; width: 100%; 
+            font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 10px; transition: 0.3s;
+        }
+
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(10, 102, 194, 0.4); }
+
+        .toggle-link { display: block; margin-top: 20px; font-size: 0.85rem; cursor: pointer; color: #888; transition: 0.3s; }
+        .toggle-link span { color: #0a66c2; font-weight: 600; }
+        .toggle-link:hover { color: #fff; }
+
+        .status-msg { font-size: 0.8rem; margin-bottom: 12px; min-height: 1.2rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="center-box">
+        <div class="glass-card">
+            <h2 id="formTitle">SIGN UP</h2>
+            
+            <input type="text" id="userInput" placeholder="Username" maxlength="15">
+            <input type="password" id="passInput" placeholder="Password">
+            
+            <div id="statusMsg" class="status-msg"></div>
+            
+            <button class="start-btn" id="mainBtn" onclick="handleSubmit()">Create Account</button>
+            
+            <div class="toggle-link" onclick="toggleMode()">
+                <span id="toggleText">Already have an account? Login</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="motion.js"></script>
+    <script>
+        // 1. Firebase Setup
+        const firebaseConfig = { databaseURL: "https://sudokugame6x6-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let isLoginMode = false;
+
+        // 2. Switch between Sign Up and Login
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('formTitle').innerText = isLoginMode ? "WELCOME BACK" : "SIGN UP";
+            document.getElementById('mainBtn').innerText = isLoginMode ? "Login" : "Create Account";
+            document.getElementById('toggleText').innerText = isLoginMode ? 
+                "New player? Create Account" : "Already have an account? Login";
+            document.getElementById('statusMsg').innerText = "";
+        }
+
+        // 3. Handle Form Submission
+        async function handleSubmit() {
+            const user = document.getElementById('userInput').value.trim();
+            const pass = document.getElementById('passInput').value.trim();
+            const status = document.getElementById('statusMsg');
+
+            if (user.length < 3 || pass.length < 4) {
+                status.innerText = "Username(3+) & Password(4+) too short!";
+                status.style.color = "#ff4d4d";
+                return;
+            }
+
+            // Secure the password with SHA-256
+            const hashedPass = sha256(pass);
+            const userRef = db.ref('players/' + user);
+
+            try {
+                const snapshot = await userRef.once('value');
+
+                if (isLoginMode) {
+                    // --- LOGIN LOGIC ---
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        if (userData.password === hashedPass) {
+                            status.innerText = "Access Granted! Loading profile...";
+                            status.style.color = "#00ff88";
+                            
+                            // Restore tokens and name from Database
+                            localStorage.setItem("gamerName", userData.username);
+                            localStorage.setItem("coins", userData.coins || 0);
+                            
+                            setTimeout(() => window.location.href = 'main.html', 1000);
+                        } else {
+                            status.innerText = "Wrong Password!";
+                            status.style.color = "#ff4d4d";
+                        }
+                    } else {
+                        status.innerText = "User not found!";
+                        status.style.color = "#ff4d4d";
+                    }
+                } else {
+                    // --- SIGN UP LOGIC ---
+                    if (snapshot.exists()) {
+                        status.innerText = "Name already taken!";
+                        status.style.color = "#ff4d4d";
+                    } else {
+                        // Create new player with 50 starting coins
+                        await userRef.set({
+                            username: user,
+                            password: hashedPass,
+                            coins: 50
+                        });
+                        localStorage.setItem("gamerName", user);
+                        localStorage.setItem("coins", 50);
+                        status.innerText = "Account Created! Redirecting...";
+                        status.style.color = "#00ff88";
+                        setTimeout(() => window.location.href = 'main.html', 1000);
+                    }
+                }
+            } catch (err) {
+                status.innerText = "Server Error!";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

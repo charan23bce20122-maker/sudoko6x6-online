@@ -1,0 +1,113 @@
+/* LinkedIn-Style Professional Color Palette */
+:root {
+    --bg-main: #f3f2ef;
+    --li-blue: #0a66c2;
+    --li-blue-hover: #004182;
+    --text-main: #000000e6;
+    --success-green: #057642;
+    --error-red: #d11124;
+    --border-light: #e0e0e0;
+    --border-thick: #444444;
+}
+
+body {
+    background-color: var(--bg-main);
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* The 6x6 Grid Container */
+.sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    border: 3px solid var(--border-thick);
+    background: white;
+    user-select: none;
+}
+
+/* Individual Cell Styling */
+.cell {
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 2x3 Box Logic: Thick borders to separate the 6 boxes */
+/* Vertical separators (after every 3rd column) */
+.cell:nth-child(3n):not(:nth-child(6n)) {
+    border-right: 3px solid var(--border-thick);
+}
+
+/* Horizontal separators (after row 2 and row 4) */
+.cell:nth-child(n+7):nth-child(-n+12),
+.cell:nth-child(n+19):nth-child(-n+24) {
+    border-bottom: 3px solid var(--border-thick);
+}
+
+/* Interaction States */
+.cell:hover {
+    background-color: #f8fafc;
+}
+
+.cell.selected {
+    background-color: #e8f3ff !important;
+    box-shadow: inset 0 0 0 2px var(--li-blue);
+    z-index: 5;
+}
+
+.cell.related {
+    background-color: #f0f4f8;
+}
+
+/* Number Colors */
+.cell.fixed {
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.cell.user-input {
+    color: var(--li-blue);
+}
+
+/* --- ANIMATIONS (The Blinking Feature) --- */
+
+/* Blink Green: Triggered when Row, Column, or 2x3 Box is correct */
+.blink-green {
+    animation: blink-success 0.8s ease-in-out;
+}
+
+@keyframes blink-success {
+    0%, 100% { background-color: white; }
+    50% { background-color: var(--success-green); color: white; }
+}
+
+/* Blink Red: Triggered when a number is placed in the wrong spot */
+.blink-red {
+    animation: blink-error 0.5s ease-in-out;
+}
+
+@keyframes blink-error {
+    0%, 100% { background-color: white; }
+    50% { background-color: var(--error-red); color: white; }
+}
+
+/* Number Pad Styling */
+.numpad-btn {
+    background: white;
+    border: 1px solid #848484;
+    border-radius: 8px;
+    padding: 15px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    transition: all 0.1s;
+}
+
+.numpad-btn:active {
+    transform: scale(0.95);
+    background-color: var(--li-blue);
+    color: white;
+}

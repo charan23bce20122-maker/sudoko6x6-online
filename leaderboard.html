@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Ranks - Sudoku 6</title>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #090a0f; font-family: sans-serif; }
+        
+        .center-box {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 95%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rank-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            width: 100%;
+            height: 450px; /* FIXED HEIGHT */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Clips the inner content */
+        }
+
+        .card-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* THE SCROLLING SECTION */
+        .scroll-area {
+            flex-grow: 1;
+            overflow-y: auto; /* Enables vertical scrolling */
+            padding: 0 15px 20px 15px;
+        }
+
+        /* Beautiful Scrollbar */
+        .scroll-area::-webkit-scrollbar { width: 6px; }
+        .scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .scroll-area::-webkit-scrollbar-thumb { 
+            background: rgba(10, 102, 194, 0.4); 
+            border-radius: 10px; 
+        }
+
+        table { width: 100%; border-collapse: collapse; color: white; }
+        
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            background: #11141b; /* Solid background so text doesn't overlap */
+            padding: 15px 5px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: #0a66c2;
+            z-index: 5;
+        }
+
+        td { padding: 12px 5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+        .me-row { 
+            background: rgba(10, 102, 194, 0.25); 
+            color: #00acee !important;
+            font-weight: bold;
+        }
+
+        .gold { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .silver { color: #c0c0c0; }
+        .bronze { color: #cd7f32; }
+
+        .start-btn {
+            margin-top: 20px;
+            background: #0a66c2;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #bgCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    </style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="center-box">
+    <div class="rank-card">
+        <div class="card-header">
+            <h2 style="color: white; margin: 0; font-size: 1.2rem; letter-spacing: 2px;">
+                <i class="fa fa-trophy" style="color: #ffd700; margin-right: 10px;"></i>GLOBAL RANKS
+            </h2>
+        </div>
+
+        <div class="scroll-area">
+            <table>
+                <thead>
+                    <tr>
+                        <th>RANK</th>
+                        <th>PLAYER</th>
+                        <th>COINS</th>
+                    </tr>
+                </thead>
+                <tbody id="realtimeBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <button class="start-btn" onclick="window.location.href='main.html'">
+        <i class="fa fa-arrow-left"></i> BACK TO MENU
+    </button>
+</div>
+
+<script src="motion.js"></script>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://sudokugame6x6-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let myName = localStorage.getItem("gamerName") || "Guest";
+    let myCoins = parseInt(localStorage.getItem("coins")) || 0;
+
+    function startLiveUpdates() {
+        const tbody = document.getElementById("realtimeBody");
+
+        db.ref('players').orderByChild('coins').on('value', (snapshot) => {
+            let players = [];
+            snapshot.forEach((child) => { players.push(child.val()); });
+            players.sort((a, b) => b.coins - a.coins);
+
+            tbody.innerHTML = ""; 
+            players.forEach((player, index) => {
+                const isMe = player.username === myName;
+                const rank = index + 1;
+                let rankClass = "";
+                if(rank === 1) rankClass = "gold";
+                else if(rank === 2) rankClass = "silver";
+                else if(rank === 3) rankClass = "bronze";
+
+                tbody.innerHTML += `
+                    <tr class="${isMe ? 'me-row' : ''}">
+                        <td class="${rankClass}">#${rank}</td>
+                        <td style="text-align: left; padding-left: 10px;">${player.username}</td>
+                        <td style="color: #ffd700;">${player.coins}</td>
+                    </tr>
+                `;
+            });
+        });
+    }
+
+    startLiveUpdates();
+</script>
+
+</body>
+</html>

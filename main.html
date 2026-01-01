@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku 6 - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        body { margin: 0; padding: 0; overflow: hidden; background: #090a0f; color: white; height: 100vh; width: 100vw; }
+        #bgCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        /* Navigation Icons */
+        .top-icons { position: absolute; top: 25px; right: 25px; display: flex; gap: 15px; z-index: 100; }
+        .icon {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 20px; border-radius: 30px;
+            backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease; cursor: pointer;
+        }
+        .icon:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+
+        /* Main Menu Content */
+        .center-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center; 
+            z-index: 100; width: 90%;
+        }
+
+        #playerName {
+            font-size: clamp(2rem, 8vw, 3.5rem); 
+            margin-bottom: 5px; text-transform: uppercase;
+            letter-spacing: 4px; font-weight: 900;
+            background: linear-gradient(to bottom, #ffffff, #a0a0a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: rgba(10, 102, 194, 0.15);
+            padding: 6px 22px; border-radius: 20px;
+            border: 1px solid rgba(10, 102, 194, 0.5);
+            font-size: 0.85rem; margin-bottom: 35px;
+            color: #00acee; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .btn-group { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+
+        .start-btn { 
+            padding: 18px 45px; font-size: 1.1rem; 
+            background: linear-gradient(135deg, #0a66c2, #004182); 
+            color: white; border: none; border-radius: 50px;
+            font-weight: bold; text-transform: uppercase; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 12px 25px rgba(10, 102, 194, 0.4);
+        }
+
+        .continue-btn {
+            padding: 18px 45px; font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: white; border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px; font-weight: bold; text-transform: uppercase;
+            cursor: pointer; backdrop-filter: blur(10px); transition: 0.3s;
+        }
+
+        .start-btn:hover, .continue-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        
+        .logout-btn { 
+            margin-top: 40px; color: rgba(255,255,255,0.3); 
+            font-size: 0.75rem; cursor: pointer; transition: 0.3s;
+        }
+        .logout-btn:hover { color: #ff4b2b; }
+
+        /* Footer Credit */
+        .footer-credit {
+            position: absolute; bottom: 25px; left: 0; width: 100%;
+            text-align: center; z-index: 100;
+            font-size: 0.7rem; letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase; font-weight: 600;
+        }
+        .footer-credit b { color: #00acee; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="top-icons">
+    <div class="icon" onclick="window.location.href='leaderboard.html'">
+        <i class="fa fa-trophy" style="color: #ffd700;"></i> <span>RANKS</span>
+    </div>
+    <div class="icon" title="Current Level">
+        <i class="fa fa-fire" style="color: #ff4500;"></i> <span id="levelCount">1</span>
+    </div>
+    <div class="icon" title="Your Balance">
+        <i class="fa fa-coins" style="color: #ffd700;"></i> <span id="coinCount">0</span>
+    </div>
+</div>
+
+<div class="center-box">
+    <h2 id="playerName">PLAYER NAME</h2>
+    <div class="level-badge">STREAK: LEVEL <span id="currentLevelDisplay">1</span></div>
+    
+    <div class="btn-group">
+        <button id="continueBtn" class="continue-btn" style="display: none;" onclick="continueGame()">
+            <i class="fa fa-rotate-right"></i> Resume
+        </button>
+        
+        <button class="start-btn" onclick="startNewGame()">
+            <i class="fa fa-play"></i> New Game
+        </button>
+    </div>
+    
+    <div class="logout-btn" onclick="logout()">
+        <i class="fa fa-sign-out-alt"></i> Logout / Switch Account
+    </div>
+</div>
+
+<div class="footer-credit">
+    Created by <b>Charan Sai</b> • AIML Student
+</div>
+
+<script src="motion.js"></script>
+<script>
+// Firebase Setup
+const firebaseConfig = { databaseURL: "https://sudokugame6x6-default-rtdb.firebaseio.com/" };
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+const db = firebase.database();
+const gamerName = localStorage.getItem("gamerName");
+
+// Redirect if not logged in
+if (!gamerName) window.location.href = 'index.html';
+
+function checkSaveData() {
+    const savedGame = localStorage.getItem("saved_sudoku_game");
+    if (savedGame) {
+        document.getElementById("continueBtn").style.display = "inline-block";
+    }
+}
+
+function continueGame() { 
+    window.location.href = 'game.html?resume=true'; 
+}
+
+function startNewGame() {
+    if (localStorage.getItem("saved_sudoku_game")) {
+        if (confirm("Starting a new game will delete your paused progress. Continue?")) {
+            localStorage.removeItem("saved_sudoku_game");
+            window.location.href = 'game.html';
+        }
+    } else {
+        window.location.href = 'game.html';
+    }
+}
+
+function refreshData() {
+    db.ref('players/' + gamerName).on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            document.getElementById("coinCount").innerText = data.coins || 0;
+            document.getElementById("levelCount").innerText = data.level || 1;
+            document.getElementById("currentLevelDisplay").innerText = data.level || 1;
+            document.getElementById("playerName").innerText = "WELCOME " + gamerName;
+
+            localStorage.setItem("coins", data.coins || 0);
+            localStorage.setItem("currentLevel", data.level || 1);
+        }
+    });
+}
+
+function logout() { 
+    if(confirm("Are you sure you want to logout?")) {
+        localStorage.clear(); 
+        window.location.href = 'index.html'; 
+    }
+}
+
+// Initialize
+refreshData();
+checkSaveData();
+
+window.onpageshow = function() { 
+    refreshData(); 
+    checkSaveData(); 
+};
+</script>
+</body>
+</html>

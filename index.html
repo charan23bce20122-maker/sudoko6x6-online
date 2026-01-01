@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ✅ PWA MANIFEST -->
+    <link rel="manifest" href="manifest.json">
+
     <title>Secure Login - Sudoku 6</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -83,9 +87,19 @@
     </div>
 
     <script src="motion.js"></script>
+
     <script>
+        // ✅ SERVICE WORKER REGISTER
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js")
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.error("SW error:", err));
+        }
+
         // 1. Firebase Setup
-        const firebaseConfig = { databaseURL: "https://sudokugame6x6-default-rtdb.firebaseio.com/" };
+        const firebaseConfig = { 
+            databaseURL: "https://sudokugame6x6-default-rtdb.firebaseio.com/" 
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -113,7 +127,6 @@
                 return;
             }
 
-            // Secure the password with SHA-256
             const hashedPass = sha256(pass);
             const userRef = db.ref('players/' + user);
 
@@ -121,17 +134,13 @@
                 const snapshot = await userRef.once('value');
 
                 if (isLoginMode) {
-                    // --- LOGIN LOGIC ---
                     if (snapshot.exists()) {
                         const userData = snapshot.val();
                         if (userData.password === hashedPass) {
-                            status.innerText = "Access Granted! Loading profile...";
+                            status.innerText = "Access Granted! Loading...";
                             status.style.color = "#00ff88";
-                            
-                            // Restore tokens and name from Database
                             localStorage.setItem("gamerName", userData.username);
                             localStorage.setItem("coins", userData.coins || 0);
-                            
                             setTimeout(() => window.location.href = 'main.html', 1000);
                         } else {
                             status.innerText = "Wrong Password!";
@@ -142,12 +151,10 @@
                         status.style.color = "#ff4d4d";
                     }
                 } else {
-                    // --- SIGN UP LOGIC ---
                     if (snapshot.exists()) {
                         status.innerText = "Name already taken!";
                         status.style.color = "#ff4d4d";
                     } else {
-                        // Create new player with 50 starting coins
                         await userRef.set({
                             username: user,
                             password: hashedPass,
@@ -155,7 +162,7 @@
                         });
                         localStorage.setItem("gamerName", user);
                         localStorage.setItem("coins", 50);
-                        status.innerText = "Account Created! Redirecting...";
+                        status.innerText = "Account Created!";
                         status.style.color = "#00ff88";
                         setTimeout(() => window.location.href = 'main.html', 1000);
                     }
@@ -166,5 +173,6 @@
             }
         }
     </script>
+
 </body>
 </html>

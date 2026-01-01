@@ -1,10 +1,10 @@
 {
-  "name": "Sudoku 6x6",
-  "short_name": "Sudoku",
-  "start_url": ".",
+  "name": "Sudoku 6x6 Online",
+  "short_name": "Sudoku6x6",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4CAF50",
+  "background_color": "#090a0f",
+  "theme_color": "#0a66c2",
   "icons": [
     {
       "src": "icon-192.png",

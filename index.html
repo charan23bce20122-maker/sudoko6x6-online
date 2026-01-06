@@ -1,121 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a66c2">
+<title>Sudoku 6x6 - Login</title>
 
-  <!-- App Icons -->
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
-  <title>Sudoku 6x6</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="main.css">
+<style>
+* { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+body { margin:0; background:#0a0f1e; color:white; height:100vh; display:flex; align-items:center; justify-content:center; }
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+.card {
+  width:360px;
+  padding:40px;
+  border-radius:25px;
+  background:rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+  text-align:center;
+}
 
-  <style>
-    * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
-    body { margin: 0; background: #090a0f; color: white; overflow: hidden; }
-    #bgCanvas { position: fixed; inset: 0; z-index: 0; }
+h2 { font-weight:800; margin-bottom:20px; }
 
-    .center-box {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1;
-    }
+input {
+  width:100%;
+  padding:14px;
+  margin-bottom:14px;
+  border-radius:12px;
+  border:none;
+  background:rgba(0,0,0,.5);
+  color:white;
+  outline:none;
+}
 
-    .glass-card {
-      width: 360px;
-      padding: 40px;
-      border-radius: 28px;
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      text-align: center;
-    }
+button {
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:linear-gradient(135deg,#0a66c2,#004a91);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    h2 { margin-bottom: 20px; font-weight: 800; }
+.toggle {
+  margin-top:15px;
+  font-size:0.85rem;
+  color:#aaa;
+  cursor:pointer;
+}
 
-    input {
-      width: 100%;
-      padding: 14px;
-      margin-bottom: 14px;
-      border-radius: 12px;
-      border: none;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      outline: none;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      background: linear-gradient(135deg,#0a66c2,#004a91);
-      color: white;
-      font-weight: 600;
-    }
-
-    .toggle-link {
-      margin-top: 16px;
-      font-size: 0.85rem;
-      color: #aaa;
-      cursor: pointer;
-    }
-
-    .status-msg {
-      min-height: 1.2rem;
-      margin-bottom: 10px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-  </style>
+#msg {
+  min-height:18px;
+  margin-bottom:10px;
+  font-size:0.8rem;
+  font-weight:600;
+}
+</style>
 </head>
 
 <body>
 
-<canvas id="bgCanvas"></canvas>
-
-<div class="center-box">
-  <div class="glass-card">
-    <h2 id="formTitle">SIGN UP</h2>
-
-    <input id="userInput" placeholder="Username" maxlength="15">
-    <input id="passInput" type="password" placeholder="Password">
-
-    <div id="statusMsg" class="status-msg"></div>
-
-    <button id="mainBtn" onclick="handleSubmit()">Create Account</button>
-
-    <div class="toggle-link" onclick="toggleMode()">
-      <span id="toggleText">Already have an account? Login</span>
-    </div>
-  </div>
-</div>
-
-<script src="motion.js"></script>
-
-<!-- Service Worker Registration -->
+<!-- 🔒 AUTO LOGIN CHECK -->
 <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-  .then(() => console.log("Service Worker Registered"))
-  .catch(err => console.log("Service Worker Error:", err));
+if (localStorage.getItem("gamerName")) {
+  window.location.replace("main.html");
 }
 </script>
+
+<div class="card">
+  <h2 id="title">SIGN UP</h2>
+
+  <input id="username" placeholder="Username" maxlength="15">
+  <input id="password" type="password" placeholder="Password">
+
+  <div id="msg"></div>
+
+  <button id="btn" onclick="submitForm()">Create Account</button>
+
+  <div class="toggle" onclick="toggleMode()" id="toggleText">
+    Already have an account? Login
+  </div>
+</div>
 
 <script>
 const firebaseConfig = {
@@ -124,25 +97,23 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let isLoginMode = false;
+let loginMode = false;
 
 function toggleMode() {
-  isLoginMode = !isLoginMode;
-  formTitle.innerText = isLoginMode ? "WELCOME BACK" : "SIGN UP";
-  mainBtn.innerText = isLoginMode ? "Login" : "Create Account";
-  toggleText.innerText = isLoginMode
-    ? "New player? Create Account"
-    : "Already have an account? Login";
-  statusMsg.innerText = "";
+  loginMode = !loginMode;
+  title.innerText = loginMode ? "WELCOME BACK" : "SIGN UP";
+  btn.innerText = loginMode ? "Login" : "Create Account";
+  toggleText.innerText = loginMode ? "New player? Create Account" : "Already have an account? Login";
+  msg.innerText = "";
 }
 
-async function handleSubmit() {
-  const user = userInput.value.trim();
-  const pass = passInput.value.trim();
+async function submitForm() {
+  const user = username.value.trim();
+  const pass = password.value.trim();
 
   if (user.length < 3 || pass.length < 4) {
-    statusMsg.innerText = "Username or password too short";
-    statusMsg.style.color = "red";
+    msg.innerText = "Too short username or password";
+    msg.style.color = "red";
     return;
   }
 
@@ -150,28 +121,28 @@ async function handleSubmit() {
   const ref = db.ref("players/" + user);
   const snap = await ref.once("value");
 
-  if (isLoginMode) {
+  if (loginMode) {
     if (snap.exists() && snap.val().password === hash) {
       localStorage.setItem("gamerName", user);
       localStorage.setItem("coins", snap.val().coins || 50);
-      statusMsg.innerText = "Login successful!";
-      statusMsg.style.color = "#00ff88";
-      setTimeout(() => window.location.href = "main.html", 1000);
+      msg.innerText = "Login successful!";
+      msg.style.color = "#00ff88";
+      setTimeout(() => window.location.replace("main.html"), 800);
     } else {
-      statusMsg.innerText = "Invalid login";
-      statusMsg.style.color = "red";
+      msg.innerText = "Invalid login details";
+      msg.style.color = "red";
     }
   } else {
     if (snap.exists()) {
-      statusMsg.innerText = "User already exists";
-      statusMsg.style.color = "red";
+      msg.innerText = "User already exists";
+      msg.style.color = "red";
     } else {
       await ref.set({ username: user, password: hash, coins: 50 });
       localStorage.setItem("gamerName", user);
       localStorage.setItem("coins", 50);
-      statusMsg.innerText = "Account created!";
-      statusMsg.style.color = "#00ff88";
-      setTimeout(() => window.location.href = "main.html", 1000);
+      msg.innerText = "Account created!";
+      msg.style.color = "#00ff88";
+      setTimeout(() => window.location.replace("main.html"), 800);
     }
   }
 }
